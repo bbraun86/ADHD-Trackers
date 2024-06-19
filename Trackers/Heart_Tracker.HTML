@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ADHD Heart Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .heart {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .heart.spent {
+            color: red;
+        }
+        .remove-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+<h2>ADHD Heart Tracker</h2>
+<p><strong>Date:</strong> <input type="date" id="date"></p>
+<h3>Total Hearts:</h3>
+<p>
+    <strong>Initial Hearts:</strong> <input type="number" id="initial-hearts" value="17" min="1" onchange="updateHearts()">
+</p>
+<p id="total-hearts"></p>
+<h3>Remaining Hearts</h3>
+<p id="remaining-hearts"></p>
+<h3>Tasks</h3>
+<table id="tasks-table">
+    <tr>
+        <th>Task Description</th>
+        <th>Time Estimate</th>
+        <th>Cost (Hearts)</th>
+        <th>Completed</th>
+        <th>Notes</th>
+        <th>Remove</th>
+    </tr>
+</table>
+<button onclick="addTask()">Add Task</button>
+<h3>Hearts Used</h3>
+<table id="hearts-used-table">
+    <tr>
+        <th>Task Description</th>
+        <th>Hearts</th>
+        <th>Notes</th>
+        <th>Remove</th>
+    </tr>
+</table>
+<button onclick="addHeartUsed()">Add Used Heart</button>
+<h3>Self-Care</h3>
+<table id="self-care-table">
+    <tr>
+        <th>Activity Description</th>
+        <th>Hearts Added</th>
+        <th>Notes</th>
+        <th>Remove</th>
+    </tr>
+</table>
+<button onclick="addSelfCare()">Add Self-Care</button>
+<h3>Notes/Reflections</h3>
+<p><strong>Energy Levels:</strong> <input type="text" id="energy-levels" size="50"></p>
+<p><strong>Adjustments for Tomorrow:</strong> <input type="text" id="adjustments" size="50"></p>
+<button onclick="saveData()">Save/Export</button>
+<input type="file" id="import-file" onchange="loadData()">
+
+<script>
+    let totalHearts = 17;
+    let usedHearts = 0;
+    let addedHearts = 0;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updateHearts();
+    });
+
+    function updateHearts() {
+        totalHearts = parseInt(document.getElementById('initial-hearts').value);
+        updateRemainingHearts();
+    }
+
+    function updateRemainingHearts() {
+        const remainingHearts = totalHearts - usedHearts + addedHearts;
+        document.getElementById('remaining-hearts').textContent = '❤️'.repeat(remainingHearts);
+    }
+    
+
+    function addTask() {
+        const table = document.getElementById('tasks-table');
+        const row = table.insertRow();
+        row.innerHTML = `
+            <td><input type="text"></td>
+            <td><input type="time"></td>
+            <td><input type="number" min="1" max="${totalHearts}" oninput="updateHeartsDisplay(this)"></td>
+            <td><input type="checkbox" onchange="moveTaskToSpent(this)"></td>
+            <td><input type="text"></td>
+            <td><button class="remove-btn" onclick="removeRow(this)">Remove</button></td>
+        `;
+    }
+    
+
+    function moveTaskToSpent(checkbox) {
+        const row = checkbox.parentElement.parentElement;
+        const cells = row.querySelectorAll('td input');
+        const heartsCost = parseInt(cells[2].value) || 0;
+    
+        if (checkbox.checked) {
+            usedHearts += heartsCost;
+        } else {
+            usedHearts -= heartsCost;
+        }
+    
+        updateRemainingHearts();
+    }
+    
+
+    function addHeartUsed() {
+        const table = document.getElementById('hearts-used-table');
+        const row = table.insertRow();
+        row.innerHTML = `
+            <td><input type="text"></td>
+            <td><input type="number" min="1" max="${totalHearts}" oninput="updateUsedHearts(this)"></td>
+            <td><input type="text"></td>
+            <td><button class="remove-btn" onclick="removeRow(this)">Remove</button></td>
+        `;
+    }
+    
+
+    function addSelfCare() {
+        const table = document.getElementById('self-care-table');
+        const row = table.insertRow();
+        row.innerHTML = `
+            <td><input type="text"></td>
+            <td><input type="number" min="1" max="${totalHearts}" oninput="updateAddedHearts(this)"></td>
+            <td><input type="text"></td>
+            <td><button class="remove-btn" onclick="removeRow(this)">Remove</button></td>
+        `;
+    }
+    
+
+    function updateHeartsDisplay(input) {
+        const hearts = '❤️'.repeat(input.value);
+        const heartsDisplay = document.createElement('span');
+        heartsDisplay.innerHTML = hearts;
+        input.parentElement.appendChild(heartsDisplay);
+        adjustHearts(input.value, 'use');
+    }
+    
+    
+    function updateUsedHearts(input) {
+        const previousHearts = parseInt(input.getAttribute('data-previous')) || 0;
+        const hearts = parseInt(input.value) || 0;
+        usedHearts = usedHearts - previousHearts + hearts;
+        input.setAttribute('data-previous', hearts);
+        updateRemainingHearts();
+    
+        const heartsDisplay = document.createElement('span');
+        heartsDisplay.innerHTML = '❤️'.repeat(hearts);
+        input.parentElement.appendChild(heartsDisplay);
+    }
+    
+    function updateAddedHearts(input) {
+        const previousHearts = parseInt(input.getAttribute('data-previous')) || 0;
+        const hearts = parseInt(input.value) || 0;
+        addedHearts = addedHearts - previousHearts + hearts;
+        input.setAttribute('data-previous', hearts);
+        updateRemainingHearts();
+    
+        const heartsDisplay = document.createElement('span');
+        heartsDisplay.innerHTML = '❤️'.repeat(hearts);
+        input.parentElement.appendChild(heartsDisplay);
+    }
+    
+    
+
+    function removeRow(button) {
+        const row = button.parentElement.parentElement;
+        const heartsInput = row.querySelector('td input[type="number"]');
+        const hearts = parseInt(heartsInput.value) || 0;
+        const table = row.closest('table');
+
+        if (table.id === 'tasks-table') {
+            const checkbox = row.querySelector('td input[type="checkbox"]');
+            if (checkbox.checked) {
+                usedHearts -= hearts;
+            }
+        } else if (table.id === 'hearts-used-table') {
+            usedHearts -= hearts;
+        } else if (table.id === 'self-care-table') {
+            addedHearts -= hearts;
+        }
+
+        row.remove();
+        updateRemainingHearts();
+    }
+    
+    
+
+    function updateHearts() {
+        totalHearts = parseInt(document.getElementById('initial-hearts').value);
+        document.getElementById('total-hearts').textContent = '❤️'.repeat(totalHearts);
+        updateRemainingHearts();
+    }
+    
+   
+    
+    function saveData() {
+        const date = document.getElementById('date').value;
+        const initialHearts = document.getElementById('initial-hearts').value;
+        const remainingHearts = document.getElementById('remaining-hearts').textContent.length;
+        const energyLevels = document.getElementById('energy-levels').value;
+        const adjustments = document.getElementById('adjustments').value;
+
+        let tasks = [];
+        document.querySelectorAll('#tasks-table tr').forEach((row, index) => {
+            if (index === 0) return; // Skip header row
+            const cells = row.querySelectorAll('td input');
+            tasks.push({
+                description: cells[0].value,
+                time: cells[1].value,
+                cost: cells[2].value,
+                completed: cells[3].checked,
+                notes: cells[4].value
+            });
+        });
+        let heartsUsed = [];
+        document.querySelectorAll('#hearts-used-table tr').forEach((row, index) => {
+            if (index === 0) return; // Skip header row
+            const cells = row.querySelectorAll('td');
+            heartsUsed.push({
+                description: cells[0].textContent,
+                hearts: cells[1].textContent,
+                notes: cells[2].textContent
+            });
+        });
+
+        let selfCare = [];
+        document.querySelectorAll('#self-care-table tr').forEach((row, index) => {
+            if (index === 0) return; // Skip header row
+            const cells = row.querySelectorAll('td');
+            selfCare.push({
+                description: cells[0].textContent,
+                heartsAdded: cells[1].textContent,
+                notes: cells[2].textContent
+            });
+        });
+
+        const data = {
+            date: date,
+            initialHearts: initialHearts,
+            remainingHearts: remainingHearts,
+            energyLevels: energyLevels,
+            adjustments: adjustments,
+            tasks: tasks,
+            heartsUsed: heartsUsed,
+            selfCare: selfCare
+        };
+
+        const json = JSON.stringify(data);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'heart_tracker_data.json';
+        a.click();
+    }
+
+    function loadData() {
+        const fileInput = document.getElementById('import-file');
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const contents = e.target.result;
+            const data = JSON.parse(contents);
+            console.log(data); // For testing, you can replace this with your actual loading logic
+        };
+        reader.readAsText(file);
+    }
+</script>
+</body>
+</html>
