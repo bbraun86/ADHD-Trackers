@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ADHD Heart Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h2>ADHD Heart Tracker</h2>
+    <p><strong>Date:</strong> <input type="date" id="date"></p>
+    <h3>Total Hearts:</h3>
+    <p>
+        <strong>Initial Hearts:</strong> <input type="number" id="initial-hearts" value="17" min="1" onchange="updateHearts()">
+    </p>
+    <p id="total-hearts"></p>
+    <h3>Remaining Hearts:</h3>
+    <p id="remaining-hearts"></p>
+    <h3>Tasks</h3>
+    <table id="tasks-table">
+        <tr>
+            <th>Task Description</th>
+            <th>Time Estimate</th>
+            <th>Cost (Hearts)</th>
+            <th>Completed</th>
+            <th>Notes</th>
+            <th>Remove</th>
+        </tr>
+    </table>
+    <button onclick="addTask()">Add Task</button>
+    <h3>Hearts Used</h3>
+    <table id="hearts-used-table">
+        <tr>
+            <th>Task Description</th>
+            <th>Hearts</th>
+            <th>Notes</th>
+            <th>Remove</th>
+        </tr>
+    </table>
+    <button onclick="addHeartUsed()">Add Used Heart</button>
+    <h3>Self-Care</h3>
+    <table id="self-care-table">
+        <tr>
+            <th>Activity Description</th>
+            <th>Hearts Added</th>
+            <th>Notes</th>
+            <th>Remove</th>
+        </tr>
+    </table>
+    <button onclick="addSelfCare()">Add Self-Care</button>
+    <h3>Notes/Reflections</h3>
+    <p><strong>Energy Levels:</strong> <input type="text" id="energy-levels" size="50"></p>
+    <p><strong>Adjustments for Tomorrow:</strong> <input type="text" id="adjustments" size="50"></p>
+    <button onclick="saveData()">Save/Export</button>
+    <input type="file" onchange="loadData(event)">
+    <script src="heartTracker.js"></script>
+</body>
+</html>
