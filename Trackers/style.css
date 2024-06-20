@@ -34,3 +34,25 @@ th {
     cursor: pointer;
     padding: 5px;
 }
+
+/* For tablets: */
+@media screen and (max-width: 768px) {
+    body {
+        font-size: 18px;
+    }
+
+    .heart {
+        font-size: 20px;
+    }
+}
+
+/* For mobile phones: */
+@media screen and (max-width: 480px) {
+    body {
+        font-size: 16px;
+    }
+
+    .heart {
+        font-size: 18px;
+    }
+}
