@@ -156,62 +156,19 @@ let totalHearts = 17;
         document.getElementById('total-hearts').textContent = '❤️'.repeat(totalHearts);
         updateRemainingHearts();
     }
-    
-   
-    
     function saveData() {
-        const date = document.getElementById('date').value;
-        const initialHearts = document.getElementById('initial-hearts').value;
-        const remainingHearts = document.getElementById('remaining-hearts').textContent.length;
-        const energyLevels = document.getElementById('energy-levels').value;
-        const adjustments = document.getElementById('adjustments').value;
-
-        let tasks = [];
-        document.querySelectorAll('#tasks-table tr').forEach((row, index) => {
-            if (index === 0) return; // Skip header row
-            const cells = row.querySelectorAll('td input');
-            tasks.push({
-                description: cells[0].value,
-                time: cells[1].value,
-                cost: cells[2].value,
-                completed: cells[3].checked,
-                notes: cells[4].value
-            });
-        });
-        let heartsUsed = [];
-        document.querySelectorAll('#hearts-used-table tr').forEach((row, index) => {
-            if (index === 0) return; // Skip header row
-            const cells = row.querySelectorAll('td input');
-            heartsUsed.push({
-                description: cells[0].value,
-                hearts: cells[1].value,
-                notes: cells[2].value
-            });
-        });
-
-        let selfCare = [];
-        document.querySelectorAll('#self-care-table tr').forEach((row, index) => {
-            if (index === 0) return; // Skip header row
-            const cells = row.querySelectorAll('td');
-            selfCare.push({
-                description: cells[0].textContent,
-                heartsAdded: cells[1].textContent,
-                notes: cells[2].textContent
-            });
-        });
-
         const data = {
-            date: date,
-            initialHearts: initialHearts,
-            remainingHearts: remainingHearts,
-            energyLevels: energyLevels,
-            adjustments: adjustments,
-            tasks: tasks,
-            heartsUsed: heartsUsed,
-            selfCare: selfCare
+            date: document.getElementById('date').value,
+            initialHearts: document.getElementById('initial-hearts').value,
+            totalHearts: document.getElementById('total-hearts').innerText,
+            remainingHearts: document.getElementById('remaining-hearts').innerText,
+            tasks: getTableData('tasks-table'),
+            heartsUsed: getTableData('hearts-used-table'),
+            selfCare: getTableData('self-care-table'),
+            energyLevels: document.getElementById('energy-levels').value,
+            adjustments: document.getElementById('adjustments').value
         };
-
-        // Send data to the server
+    
         fetch('/saveData', {
             method: 'POST',
             headers: {
@@ -219,77 +176,74 @@ let totalHearts = 17;
             },
             body: JSON.stringify(data)
         })
-        .then(response => {
-            if (response.ok) {
-                console.log('Data saved successfully');
-            } else {
-                console.error('Failed to save data');
+        .then(response => response.json())
+        .then(result => {
+            if (result.message) {
+                alert(result.message);
+            } else if (result.error) {
+                alert(result.error);
             }
         })
         .catch(error => {
-            console.error('An error occurred while saving data:', error);
+            console.error('Error:', error);
+        });
+    }
+    
+    function loadData() {
+        fetch('/getData')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('date').value = data.date;
+            document.getElementById('initial-hearts').value = data.initialHearts;
+            document.getElementById('total-hearts').innerText = data.totalHearts;
+            document.getElementById('remaining-hearts').innerText = data.remainingHearts;
+            setTableData('tasks-table', data.tasks);
+            setTableData('hearts-used-table', data.heartsUsed);
+            setTableData('self-care-table', data.selfCare);
+            document.getElementById('energy-levels').value = data.energyLevels;
+            document.getElementById('adjustments').value = data.adjustments;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+    
+    function getTableData(tableId) {
+        const table = document.getElementById(tableId);
+        const rows = table.getElementsByTagName('tr');
+        const data = [];
+        for (let i = 1; i < rows.length; i++) {
+            const cells = rows[i].getElementsByTagName('td');
+            const rowData = [];
+            for (let j = 0; j < cells.length - 1; j++) {
+                rowData.push(cells[j].innerText);
+            }
+            data.push(rowData);
+        }
+        return data;
+    }
+    
+    function setTableData(tableId, data) {
+        const table = document.getElementById(tableId);
+        while (table.rows.length > 1) {
+            table.deleteRow(1);
+        }
+        data.forEach(rowData => {
+            const row = table.insertRow();
+            rowData.forEach(cellData => {
+                const cell = row.insertCell();
+                cell.innerText = cellData;
+            });
+            const removeCell = row.insertCell();
+            const removeButton = document.createElement('button');
+            removeButton.innerText = 'Remove';
+            removeButton.onclick = function() {
+                table.deleteRow(row.rowIndex);
+            };
+            removeCell.appendChild(removeButton);
         });
     }
 
-    function loadData() {
-    // Replace '/getData' with the actual endpoint URL
-    fetch('/getData', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Populate the fields with the loaded data
-        document.getElementById('date').value = data.date;
-        document.getElementById('initial-hearts').value = data.initialHearts;
-        document.getElementById('energy-levels').value = data.energyLevels;
-        document.getElementById('adjustments').value = data.adjustments;
-        // Populate the tasks
-        const tasksTable = document.getElementById('tasks-table');
-        data.tasks.forEach(task => {
-            const row = tasksTable.insertRow();
-            row.innerHTML = `
-                <td><input type="text" value="${task.description}"></td>
-                <td><input type="time" value="${task.time}"></td>
-                <td><input type="number" min="1" max="${totalHearts}" oninput="updateHeartsDisplay(this)" value="${task.cost}"></td>
-                <td><input type="checkbox" onchange="moveTaskToSpent(this)" ${task.completed ? 'checked' : ''}></td>
-                <td><input type="text" value="${task.notes}"></td>
-                <td><button class="remove-btn" onclick="removeRow(this)">Remove</button></td>
-            `;
-            if (task.completed) {
-                moveTaskToSpent(row.querySelector('td input[type="checkbox"]'));
-            }
-        });
-        // Populate the hearts used
-        const heartsUsedTable = document.getElementById('hearts-used-table');
-        data.heartsUsed.forEach(heartUsed => {
-            const row = heartsUsedTable.insertRow();
-            row.innerHTML = `
-                <td><input type="text" value="${heartUsed.description}"></td>
-                <td><input type="number" min="1" max="${totalHearts}" oninput="updateHeartsDisplay(this)" value="${heartUsed.cost}"></td>
-                <td><button class="remove-btn" onclick="removeRow(this)">Remove</button></td>
-            `;
-        });
-        // Populate the self-care
-        const selfCareTable = document.getElementById('self-care-table');
-        data.selfCare.forEach(selfCare => {
-            const row = selfCareTable.insertRow();
-            row.innerHTML = `
-                <td><input type="text" value="${selfCare.description}"></td>
-                <td><input type="number" min="1" max="${totalHearts}" oninput="updateHeartsDisplay(this)" value="${selfCare.cost}"></td>
-                <td><button class="remove-btn" onclick="removeRow(this)">Remove</button></td>
-            `;
-        });
-        // Finally, update the hearts
-        updateHearts();
-    })
-    .catch(error => {
-        console.error('Error fetching data:', error);
-    });
-}
-    }
     function updateUI() {
         // Assuming tasks, heartsUsed, and selfCare are arrays and their respective elements are displayed in tables
         const tasksTable = document.getElementById('tasks-table');

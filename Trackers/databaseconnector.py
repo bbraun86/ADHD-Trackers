@@ -48,9 +48,12 @@ def get_data():
             password='89!jklFz3Wre'
         )
         cursor = connection.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM tracker_data")
-        rows = cursor.fetchall()
-        return jsonify(rows), 200
+        cursor.execute("SELECT * FROM tracker_data ORDER BY id DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            return jsonify(row), 200
+        else:
+            return jsonify({"error": "No data found"}), 404
     except Error as e:
         return jsonify({"error": str(e)}), 500
     finally:
@@ -59,4 +62,4 @@ def get_data():
             connection.close()
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
