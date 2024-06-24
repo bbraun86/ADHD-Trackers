@@ -1,25 +1,8 @@
 import mysql.connector
 from mysql.connector import Error
 from flask import Flask, request, jsonify
-import mysql.connector
-from mysql.connector import Error
 
 app = Flask(__name__)
-
-def insert_tracker_data(data):
-    # Your existing Python function to insert data into the database
-
-@app.route('/saveData', methods=['POST'])
-def save_data():
-    data = request.json
-    try:
-        insert_tracker_data(data)
-        return jsonify({"message": "Data saved successfully"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(debug=True)
 
 def insert_tracker_data(data):
     try:
@@ -46,8 +29,14 @@ def insert_tracker_data(data):
             connection.close()
             print("MySQL connection is closed")
 
-# Example usage
-#insert_tracker_data("Your tracker data here")
+@app.route('/saveData', methods=['POST'])
+def save_data():
+    data = request.json
+    try:
+        insert_tracker_data(data)
+        return jsonify({"message": "Data saved successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/getData', methods=['GET'])
 def get_data():
@@ -68,3 +57,6 @@ def get_data():
         if connection.is_connected():
             cursor.close()
             connection.close()
+
+if __name__ == '__main__':
+    app.run(debug=True)
